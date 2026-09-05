@@ -1,17 +1,44 @@
 import logging
 import os
 import random
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+
+# ----------------- Render Health Check Server -----------------
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is live!")
+
+def run_health_check_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
+
+threading.Thread(target=run_health_check_server, daemon=True).start()
+# --------------------------------------------------------------
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# User memory storage
-user_data = {}
+# ইউজার ল্যাঙ্গুয়েজ মেমোরি
+user_lang = {}
 
-# Main Menu Keyboard (Video Style)
+# દેશ ও কান্ট্রি কোড ম্যাপিং (Country Codes)
+COUNTRY_CODES = {
+    "India": "+91",
+    "Bangladesh": "+880",
+    "SaudiArabia": "+966",
+    "Mali": "+223",
+    "Madagascar": "+261",
+    "SierraLeone": "+232"
+}
+
+# Main Menu Keyboard
 def main_keyboard():
     keyboard = [
         ["💬 GET NUMBER", "🔐 2FA CODE"],
@@ -19,6 +46,15 @@ def main_keyboard():
         ["💰 WITHDRAW"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+# Language Select Keyboard
+def language_keyboard():
+    keyboard = [
+        [InlineKeyboardButton("🇧🇩 বাংলা (Bengali)", callback_data='set_lang_bn')],
+        [InlineKeyboardButton("🇺🇸 English", callback_data='set_lang_en')],
+        [InlineKeyboardButton("❌ ক্যানসেল (Cancel)", callback_data='close_menu')]
+    ]
+    return InlineKeyboardMarkup(keyboard)
 
 # Services Menu
 def services_keyboard():
@@ -31,18 +67,20 @@ def services_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
-# Country List Menu (For WhatsApp / Other Services)
+# Country List Menu (India যুক্ত করা হয়েছে)
 def country_keyboard(service_name):
     keyboard = [
-        [InlineKeyboardButton("🇲🇱 Mali", callback_data=f"cntry_{service_name}_Mali")],
-        [InlineKeyboardButton("🇲🇬 Madagascar", callback_data=f"cntry_{service_name}_Madagascar")],
+        [InlineKeyboardButton("🇮🇳 India", callback_data=f"cntry_{service_name}_India")],
         [InlineKeyboardButton("🇧🇩 Bangladesh", callback_data=f"cntry_{service_name}_Bangladesh")],
         [InlineKeyboardButton("🇸🇦 Saudi Arabia", callback_data=f"cntry_{service_name}_SaudiArabia")],
+        [InlineKeyboardButton("🇲🇱 Mali", callback_data=f"cntry_{service_name}_Mali")],
+        [InlineKeyboardButton("🇲🇬 Madagascar", callback_data=f"cntry_{service_name}_Madagascar")],
         [InlineKeyboardButton("🇸🇱 Sierra Leone", callback_data=f"cntry_{service_name}_SierraLeone")],
         [InlineKeyboardButton("🔙 ব্যাক", callback_data='back_to_services')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
+# /start Command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = update.effective_user.first_name
     welcome_text = (
@@ -53,11 +91,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(welcome_text, reply_markup=main_keyboard(), parse_mode='Markdown')
 
+# /language Command
+async def set_language_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = "🌐 **ভাষা নির্বাচন করুন / Select Language:**"
+    await update.message.reply_text(msg, reply_markup=language_keyboard(), parse_mode='Markdown')
+
+# Handle Keyboard Buttons
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text
 
-    if text == "💬 GET NUMBER":
+    if text in ["🌐 LANGUAGE", "🌐 ভাষা"]:
+        msg = "🌐 **ভাষা নির্বাচন করুন / Select Language:**"
+        await update.message.reply_text(msg, reply_markup=language_keyboard(), parse_mode='Markdown')
+
+    elif text == "💬 GET NUMBER":
         msg = "👑 **SELECT SERVICE** 👑\n\nপছন্দমতো সার্ভিস বেছে নিন:"
         await update.message.reply_text(msg, reply_markup=services_keyboard(), parse_mode='Markdown')
 
@@ -87,12 +135,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "💰 WITHDRAW":
         await update.message.reply_text("💳 **উইথড্র অপশন:**\n\nসর্বনিম্ন উইথড্র limit ৳১০০ টাকা। আপনার পর্যাপ্ত ব্যালেন্স নেই।", parse_mode='Markdown')
 
+# Callback Button Handler
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    user_id = query.from_user.id
     await query.answer()
 
     if query.data == 'close_menu':
         await query.message.delete()
+
+    elif query.data.startswith('set_lang_'):
+        lang_code = query.data.split('_')[2]
+        user_lang[user_id] = lang_code
+        selected_lang = "বাংলা" if lang_code == 'bn' else "English"
+        await query.edit_message_text(f"✅ **ভাষা সফলভাবে `{selected_lang}` সেট করা হয়েছে!**", parse_mode='Markdown')
 
     elif query.data == 'back_to_services':
         msg = "👑 **SELECT SERVICE** 👑\n\nপছন্দমতো সার্ভিস বেছে নিন:"
@@ -106,9 +162,18 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data.startswith('cntry_'):
         _, service, country = query.data.split('_')
         
-        generated_num = f"+232{random.randint(10000000, 99999999)}"
+        # দেশ অনুযায়ী সঠিক কান্ট্রি কোড নির্বাচন
+        prefix = COUNTRY_CODES.get(country, "+880")
+        
+        # দেশ ভিত্তিক ডিজিট সংখ্যা সমন্বয় (যেমন ইন্ডিয়া ১০ ডিজিট, বাংলাদেশ ১০ ডিজিট)
+        if country in ["India", "Bangladesh"]:
+            random_digits = random.randint(6000000000, 9999999999)
+        else:
+            random_digits = random.randint(10000000, 99999999)
+            
+        generated_num = f"{prefix}{random_digits}"
         price = "35.00 BDT"
-        operator = "Orange (Airtel)"
+        operator = "Default Line"
         
         num_card = (
             f"💬 **{service} ({country})**\n"
@@ -141,6 +206,8 @@ def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("language", set_language_cmd))
+    app.add_handler(CommandHandler("lang", set_language_cmd))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
