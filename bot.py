@@ -31,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =========================================================
-# ENVIRONMENT VARIABLES
+# ENVIRONMENT
 # =========================================================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -48,16 +48,20 @@ YOUTUBE_URL = "https://www.youtube.com/@ToonovaCartoon1"
 # USER DATA
 # =========================================================
 
-# Runtime data only.
-# Render restart হলে এই temporary data reset হতে পারে.
 user_data_store = {}
 
 
 def get_user_data(user_id):
+
     if user_id not in user_data_store:
+
         user_data_store[user_id] = {
             "language": "bn",
             "history": [],
+            "referrals": 0,
+            "referral_earnings": 0.0,
+            "balance": 0.0,
+            "referred_by": None,
         }
 
     return user_data_store[user_id]
@@ -107,7 +111,7 @@ TEXTS = {
 
         "history_cleared": (
             "✅ *History Cleared!*\n\n"
-            "আপনার Bot-side সংরক্ষিত history/data মুছে ফেলা হয়েছে।"
+            "আপনার Bot-side history/data মুছে ফেলা হয়েছে।"
         ),
 
         "language_title": (
@@ -121,20 +125,29 @@ TEXTS = {
             "👤 *USER PROFILE*\n\n"
             "🆔 ID: `{id}`\n"
             "📛 Name: {name}\n"
-            "💰 Balance: ৳0.00\n"
-            "📱 Numbers: 0"
+            "💰 Balance: ৳{balance:.2f}\n"
+            "👥 Total Referrals: {referrals}\n"
+            "💵 Referral Earnings: ৳{earnings:.2f}"
         ),
 
         "refer_text": (
             "🎁 *REFERRAL PROGRAM*\n\n"
-            "আপনার Referral Link বন্ধুদের সাথে শেয়ার করুন।\n\n"
-            "🔗 `{link}`"
+            "👥 *Your Referral Number:* `{referrals}`\n"
+            "💵 *Referral Earnings:* ৳{earnings:.2f}\n\n"
+            "🔗 *Your Referral Link:*\n"
+            "`{link}`\n\n"
+            "📢 বন্ধুদের এই Link শেয়ার করুন।"
+        ),
+
+        "referral_added": (
+            "🎉 *Referral Added!*\n\n"
+            "আপনার Referral Number এখন: `{referrals}`"
         ),
 
         "withdraw_text": (
             "💰 *WITHDRAW*\n\n"
             "💵 Minimum withdrawal: ৳100\n"
-            "💳 Current balance: ৳0.00\n\n"
+            "💳 Current balance: ৳{balance:.2f}\n\n"
             "⚠️ আপনার পর্যাপ্ত balance নেই।"
         ),
 
@@ -152,7 +165,7 @@ TEXTS = {
             "💬 Service: *{service}*\n"
             "🌍 Country: *{country}*\n\n"
             "API key পাওয়া গেছে।\n"
-            "এখন বৈধ API request integration যুক্ত করা যেতে পারে।"
+            "বৈধ API integration এখানে যুক্ত করা যেতে পারে।"
         ),
 
         "back": "🔙 Back",
@@ -161,13 +174,13 @@ TEXTS = {
 
         "help_text": (
             "ℹ️ *Aurex Noo'R Help*\n\n"
-            "💬 *GET NUMBER* — Available service ও country নির্বাচন করুন।\n"
-            "👤 *PROFILE* — আপনার basic profile দেখুন।\n"
-            "🎁 *REFER* — আপনার referral link পান।\n"
-            "💰 *WITHDRAW* — withdrawal status দেখুন।\n\n"
-            "🌐 ভাষা পরিবর্তন করতে Telegram Menu থেকে Language নির্বাচন করুন।\n"
+            "💬 *GET NUMBER* — Service ও country নির্বাচন করুন।\n"
+            "👤 *PROFILE* — আপনার profile দেখুন।\n"
+            "🎁 *REFER* — Referral number ও link দেখুন।\n"
+            "💰 *WITHDRAW* — Withdrawal status দেখুন।\n\n"
+            "🌐 Language পরিবর্তন করতে Menu ব্যবহার করুন।\n"
             "🗑️ Bot-side history মুছতে Clear History ব্যবহার করুন।\n\n"
-            "⚠️ Password, OTP, 2FA secret বা অন্যের verification code এখানে পাঠাবেন না।"
+            "⚠️ Password, OTP, 2FA secret বা অন্যের verification code পাঠাবেন না।"
         ),
     },
 
@@ -223,20 +236,29 @@ TEXTS = {
             "👤 *USER PROFILE*\n\n"
             "🆔 ID: `{id}`\n"
             "📛 Name: {name}\n"
-            "💰 Balance: ৳0.00\n"
-            "📱 Numbers: 0"
+            "💰 Balance: ৳{balance:.2f}\n"
+            "👥 Total Referrals: {referrals}\n"
+            "💵 Referral Earnings: ৳{earnings:.2f}"
         ),
 
         "refer_text": (
             "🎁 *REFERRAL PROGRAM*\n\n"
-            "Share your referral link with friends.\n\n"
-            "🔗 `{link}`"
+            "👥 *Your Referral Number:* `{referrals}`\n"
+            "💵 *Referral Earnings:* ৳{earnings:.2f}\n\n"
+            "🔗 *Your Referral Link:*\n"
+            "`{link}`\n\n"
+            "📢 Share this link with your friends."
+        ),
+
+        "referral_added": (
+            "🎉 *Referral Added!*\n\n"
+            "Your Referral Number is now: `{referrals}`"
         ),
 
         "withdraw_text": (
             "💰 *WITHDRAW*\n\n"
             "💵 Minimum withdrawal: ৳100\n"
-            "💳 Current balance: ৳0.00\n\n"
+            "💳 Current balance: ৳{balance:.2f}\n\n"
             "⚠️ Your balance is insufficient."
         ),
 
@@ -245,7 +267,6 @@ TEXTS = {
             "💬 Service: *{service}*\n"
             "🌍 Country: *{country}*\n\n"
             "The API service has not been configured yet.\n\n"
-            "🔑 Add a valid API key and API integration can be enabled.\n\n"
             "❌ No fake/random number will be displayed."
         ),
 
@@ -253,8 +274,8 @@ TEXTS = {
             "🟢 *API CONFIGURED*\n\n"
             "💬 Service: *{service}*\n"
             "🌍 Country: *{country}*\n\n"
-            "The API key was detected.\n"
-            "A valid API request integration can now be connected."
+            "API key detected.\n"
+            "A valid API integration can be connected here."
         ),
 
         "back": "🔙 Back",
@@ -263,13 +284,13 @@ TEXTS = {
 
         "help_text": (
             "ℹ️ *Aurex Noo'R Help*\n\n"
-            "💬 *GET NUMBER* — Select an available service and country.\n"
-            "👤 *PROFILE* — View your basic profile.\n"
-            "🎁 *REFER* — Get your referral link.\n"
+            "💬 *GET NUMBER* — Select service and country.\n"
+            "👤 *PROFILE* — View your profile.\n"
+            "🎁 *REFER* — View referral number and link.\n"
             "💰 *WITHDRAW* — Check withdrawal status.\n\n"
-            "🌐 Use Telegram Menu to change language.\n"
+            "🌐 Use Menu to change language.\n"
             "🗑️ Use Clear History to remove bot-side history.\n\n"
-            "⚠️ Never send passwords, OTPs, 2FA secrets or another person's verification codes here."
+            "⚠️ Never send passwords, OTPs, 2FA secrets or another person's verification codes."
         ),
     },
 
@@ -281,8 +302,7 @@ TEXTS = {
             "🤝 हमारे Bot में आपका स्वागत है।\n"
             "नीचे दिए गए Menu से विकल्प चुनें।\n\n"
             "🟢 *Bot Status:* Online\n"
-            "🌐 *Language:* हिन्दी\n\n"
-            "✨ हमारा उद्देश्य आपके अनुभव को आसान, तेज़ और बेहतर बनाना है।"
+            "🌐 *Language:* हिन्दी"
         ),
 
         "get_number": "💬 GET NUMBER",
@@ -325,20 +345,28 @@ TEXTS = {
             "👤 *USER PROFILE*\n\n"
             "🆔 ID: `{id}`\n"
             "📛 Name: {name}\n"
-            "💰 Balance: ৳0.00\n"
-            "📱 Numbers: 0"
+            "💰 Balance: ৳{balance:.2f}\n"
+            "👥 Total Referrals: {referrals}\n"
+            "💵 Referral Earnings: ৳{earnings:.2f}"
         ),
 
         "refer_text": (
             "🎁 *REFERRAL PROGRAM*\n\n"
-            "अपना Referral Link दोस्तों के साथ शेयर करें।\n\n"
-            "🔗 `{link}`"
+            "👥 *Your Referral Number:* `{referrals}`\n"
+            "💵 *Referral Earnings:* ৳{earnings:.2f}\n\n"
+            "🔗 *Your Referral Link:*\n"
+            "`{link}`"
+        ),
+
+        "referral_added": (
+            "🎉 *Referral Added!*\n\n"
+            "आपका Referral Number अब: `{referrals}`"
         ),
 
         "withdraw_text": (
             "💰 *WITHDRAW*\n\n"
             "💵 Minimum withdrawal: ৳100\n"
-            "💳 Current balance: ৳0.00\n\n"
+            "💳 Current balance: ৳{balance:.2f}\n\n"
             "⚠️ आपका balance पर्याप्त नहीं है।"
         ),
 
@@ -347,7 +375,6 @@ TEXTS = {
             "💬 Service: *{service}*\n"
             "🌍 Country: *{country}*\n\n"
             "API service अभी configure नहीं की गई है।\n\n"
-            "🔑 Valid API key जोड़ने के बाद API integration चालू की जा सकती है।\n\n"
             "❌ कोई fake/random number नहीं दिखाया जाएगा।"
         ),
 
@@ -355,8 +382,7 @@ TEXTS = {
             "🟢 *API CONFIGURED*\n\n"
             "💬 Service: *{service}*\n"
             "🌍 Country: *{country}*\n\n"
-            "API key मिल गई है।\n"
-            "अब valid API request integration जोड़ी जा सकती है।"
+            "API key मिल गई है।"
         ),
 
         "back": "🔙 Back",
@@ -365,12 +391,10 @@ TEXTS = {
 
         "help_text": (
             "ℹ️ *Aurex Noo'R Help*\n\n"
-            "💬 *GET NUMBER* — उपलब्ध service और country चुनें।\n"
-            "👤 *PROFILE* — अपना basic profile देखें।\n"
-            "🎁 *REFER* — अपना referral link पाएं।\n"
-            "💰 *WITHDRAW* — withdrawal status देखें।\n\n"
-            "🌐 Language बदलने के लिए Telegram Menu का उपयोग करें।\n"
-            "🗑️ Bot-side history हटाने के लिए Clear History इस्तेमाल करें।\n\n"
+            "💬 *GET NUMBER* — Service और country चुनें।\n"
+            "👤 *PROFILE* — अपना profile देखें।\n"
+            "🎁 *REFER* — Referral number और link देखें।\n"
+            "💰 *WITHDRAW* — Withdrawal status देखें।\n\n"
             "⚠️ Password, OTP, 2FA secret या किसी अन्य व्यक्ति का verification code यहां न भेजें।"
         ),
     },
@@ -425,25 +449,8 @@ def start_gate_keyboard():
     )
 
 
-async def show_start_gate(update, user_id):
-
-    text = (
-        "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
-        "🚀 Bot ব্যবহার শুরু করার আগে আমাদের social channels দেখে নিতে পারেন।\n\n"
-        "🎵 TikTok: @aurex_noor1\n"
-        "▶️ YouTube: ToonovaCartoon1\n\n"
-        "👇 নিচের *OPEN BOT* button চাপুন।"
-    )
-
-    await update.message.reply_text(
-        text,
-        reply_markup=start_gate_keyboard(),
-        parse_mode="Markdown",
-    )
-
-
 # =========================================================
-# MAIN REPLY KEYBOARD
+# MAIN KEYBOARD
 # =========================================================
 
 def main_keyboard(user_id):
@@ -464,7 +471,7 @@ def main_keyboard(user_id):
 
 
 # =========================================================
-# SERVICE KEYBOARD
+# SERVICES
 # =========================================================
 
 SERVICES = {
@@ -503,7 +510,7 @@ def services_keyboard(user_id):
 
 
 # =========================================================
-# COUNTRY KEYBOARD
+# COUNTRIES
 # =========================================================
 
 COUNTRIES = {
@@ -580,7 +587,7 @@ def menu_keyboard(user_id):
 
 
 # =========================================================
-# LANGUAGE KEYBOARD
+# LANGUAGE
 # =========================================================
 
 def language_keyboard():
@@ -616,7 +623,7 @@ def language_keyboard():
 
 
 # =========================================================
-# /START
+# START
 # =========================================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -625,19 +632,74 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = user.id
 
-    get_user_data(user_id)
+    user_data = get_user_data(user_id)
 
-    await show_start_gate(
-        update,
-        user_id
+    # -----------------------------------------------------
+    # REFERRAL PROCESS
+    # /start 123456789
+    # -----------------------------------------------------
+
+    if context.args:
+
+        try:
+
+            referrer_id = int(
+                context.args[0]
+            )
+
+            # নিজের referral নিজে ব্যবহার করতে পারবে না
+            if referrer_id != user_id:
+
+                referrer = get_user_data(
+                    referrer_id
+                )
+
+                # একই user আগে referred হলে আবার count হবে না
+                if (
+                    user_data.get("referred_by") is None
+                    and referrer_id != user_data.get("referred_by")
+                ):
+
+                    user_data["referred_by"] = referrer_id
+
+                    referrer["referrals"] += 1
+
+                    logger.info(
+                        f"Referral added: "
+                        f"{referrer_id} -> {user_id}"
+                    )
+
+        except (ValueError, TypeError):
+
+            pass
+
+    # -----------------------------------------------------
+    # START GATE
+    # -----------------------------------------------------
+
+    text = (
+        "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
+        "🚀 Bot ব্যবহার শুরু করুন।\n\n"
+        "🎵 TikTok: @aurex_noor1\n"
+        "▶️ YouTube: ToonovaCartoon1\n\n"
+        "👇 নিচের *OPEN BOT* button চাপুন।"
+    )
+
+    await update.message.reply_text(
+        text,
+        reply_markup=start_gate_keyboard(),
+        parse_mode="Markdown",
     )
 
 
 # =========================================================
-# /MENU
+# MENU COMMAND
 # =========================================================
 
-async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def menu_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     user_id = update.effective_user.id
 
@@ -649,10 +711,13 @@ async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================================
-# /HELP
+# HELP COMMAND
 # =========================================================
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def help_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     user_id = update.effective_user.id
 
@@ -666,7 +731,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # MESSAGE HANDLER
 # =========================================================
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     if not update.message or not update.message.text:
         return
@@ -697,12 +765,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         name = user.first_name or "User"
 
+        data = get_user_data(user_id)
+
         await update.message.reply_text(
             t(
                 user_id,
                 "profile_text",
                 id=user.id,
                 name=name,
+                balance=data["balance"],
+                referrals=data["referrals"],
+                earnings=data["referral_earnings"],
             ),
             parse_mode="Markdown",
         )
@@ -713,14 +786,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif text == t(user_id, "refer"):
 
-        username = context.bot.username or "Aurex_otp_bot"
+        username = context.bot.username
 
-        link = f"https://t.me/{username}?start={user_id}"
+        if not username:
+            username = "Aurex_otp_bot"
+
+        data = get_user_data(user_id)
+
+        link = (
+            f"https://t.me/"
+            f"{username}"
+            f"?start={user_id}"
+        )
 
         await update.message.reply_text(
             t(
                 user_id,
                 "refer_text",
+                referrals=data["referrals"],
+                earnings=data["referral_earnings"],
                 link=link,
             ),
             parse_mode="Markdown",
@@ -732,8 +816,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif text == t(user_id, "withdraw"):
 
+        data = get_user_data(user_id)
+
         await update.message.reply_text(
-            t(user_id, "withdraw_text"),
+            t(
+                user_id,
+                "withdraw_text",
+                balance=data["balance"],
+            ),
             parse_mode="Markdown",
         )
 
@@ -742,7 +832,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # CALLBACK HANDLER
 # =========================================================
 
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_callback(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     query = update.callback_query
 
@@ -764,14 +857,17 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         try:
+
             await context.bot.send_message(
                 chat_id=user_id,
                 text="👇 নিচের Menu থেকে একটি option নির্বাচন করুন।",
                 reply_markup=main_keyboard(user_id),
             )
+
         except Exception as e:
+
             logger.error(
-                f"Main keyboard error: {e}"
+                f"Keyboard update error: {e}"
             )
 
         return
@@ -783,6 +879,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "close":
 
         try:
+
             await query.message.delete()
 
         except Exception:
@@ -843,9 +940,32 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "bn"
         )
 
+        referrals = user_data.get(
+            "referrals",
+            0
+        )
+
+        earnings = user_data.get(
+            "referral_earnings",
+            0.0
+        )
+
+        balance = user_data.get(
+            "balance",
+            0.0
+        )
+
+        referred_by = user_data.get(
+            "referred_by"
+        )
+
         user_data_store[user_id] = {
             "language": current_language,
             "history": [],
+            "referrals": referrals,
+            "referral_earnings": earnings,
+            "balance": balance,
+            "referred_by": referred_by,
         }
 
         await query.edit_message_text(
@@ -899,7 +1019,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data["language"] = new_language
 
         await query.edit_message_text(
-            t(user_id, "language_changed"),
+            t(
+                user_id,
+                "language_changed"
+            ),
             reply_markup=menu_keyboard(user_id),
             parse_mode="Markdown",
         )
@@ -908,8 +1031,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await context.bot.send_message(
                 chat_id=user_id,
-                text=t(user_id, "welcome"),
-                reply_markup=main_keyboard(user_id),
+                text=t(
+                    user_id,
+                    "welcome"
+                ),
+                reply_markup=main_keyboard(
+                    user_id
+                ),
                 parse_mode="Markdown",
             )
 
@@ -928,8 +1056,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "services":
 
         await query.edit_message_text(
-            t(user_id, "select_service"),
-            reply_markup=services_keyboard(user_id),
+            t(
+                user_id,
+                "select_service"
+            ),
+            reply_markup=services_keyboard(
+                user_id
+            ),
             parse_mode="Markdown",
         )
 
@@ -1064,7 +1197,9 @@ async def error_handler(
 # RENDER HEALTH CHECK
 # =========================================================
 
-class HealthCheckHandler(BaseHTTPRequestHandler):
+class HealthCheckHandler(
+    BaseHTTPRequestHandler
+):
 
     def do_GET(self):
 
@@ -1112,10 +1247,12 @@ def run_health_check():
 
 
 # =========================================================
-# MAIN
+# BOT COMMANDS
 # =========================================================
 
-async def post_init(application):
+async def post_init(
+    application
+):
 
     await application.bot.set_my_commands(
         [
@@ -1135,6 +1272,10 @@ async def post_init(application):
     )
 
 
+# =========================================================
+# MAIN
+# =========================================================
+
 def main():
 
     if not BOT_TOKEN:
@@ -1146,7 +1287,7 @@ def main():
         return
 
     # -----------------------------------------------------
-    # START RENDER HEALTH SERVER
+    # HEALTH SERVER
     # -----------------------------------------------------
 
     health_thread = threading.Thread(
@@ -1157,7 +1298,7 @@ def main():
     health_thread.start()
 
     # -----------------------------------------------------
-    # TELEGRAM APPLICATION
+    # APPLICATION
     # -----------------------------------------------------
 
     application = (
@@ -1193,7 +1334,7 @@ def main():
     )
 
     # -----------------------------------------------------
-    # CALLBACK BUTTONS
+    # CALLBACK
     # -----------------------------------------------------
 
     application.add_handler(
@@ -1203,7 +1344,7 @@ def main():
     )
 
     # -----------------------------------------------------
-    # TEXT MESSAGES
+    # MESSAGES
     # -----------------------------------------------------
 
     application.add_handler(
@@ -1214,7 +1355,7 @@ def main():
     )
 
     # -----------------------------------------------------
-    # ERROR HANDLER
+    # ERROR
     # -----------------------------------------------------
 
     application.add_error_handler(
@@ -1222,7 +1363,7 @@ def main():
     )
 
     # -----------------------------------------------------
-    # START
+    # START POLLING
     # -----------------------------------------------------
 
     logger.info(
@@ -1235,7 +1376,7 @@ def main():
 
 
 # =========================================================
-# START APPLICATION
+# START
 # =========================================================
 
 if __name__ == "__main__":
