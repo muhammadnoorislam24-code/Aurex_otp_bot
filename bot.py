@@ -20,7 +20,7 @@ from telegram.ext import (
 )
 
 # =========================================================
-# AUREX NOO'R — TELEGRAM BOT PRO
+# AUREX NOO'R — PRO VERSION
 # =========================================================
 
 logging.basicConfig(
@@ -37,16 +37,16 @@ TIKTOK_URL = "https://www.tiktok.com/@aurex_noor1"
 YOUTUBE_URL = "https://www.youtube.com/@ToonovaCartoon1"
 
 # Temporary RAM storage
-user_data_store = {}
+users = {}
 
 
 # =========================================================
 # USER DATA
 # =========================================================
 
-def get_user_data(user_id):
-    if user_id not in user_data_store:
-        user_data_store[user_id] = {
+def get_user(user_id):
+    if user_id not in users:
+        users[user_id] = {
             "language": "bn",
             "history": [],
             "referrals": 0,
@@ -55,27 +55,50 @@ def get_user_data(user_id):
             "referred_by": None,
         }
 
-    return user_data_store[user_id]
+    return users[user_id]
 
 
 # =========================================================
-# TRANSLATIONS
+# TRANSLATION
 # =========================================================
 
-TEXTS = {
+TEXT = {
 
     "bn": {
         "welcome":
             "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
-            "🚀 আপনার Aurex Noo'R Bot প্রস্তুত।\n\n"
+            "🚀 *Premium Telegram Bot*\n\n"
             "📱 GET NUMBER — Service ও Country নির্বাচন করুন।\n"
+            "🔐 2FA CODE — নিরাপদ 2FA তথ্য দেখুন।\n"
             "👤 PROFILE — আপনার Profile দেখুন।\n"
             "🎁 REFER — Referral link ও সংখ্যা দেখুন।\n"
             "💰 WITHDRAW — Withdrawal status দেখুন।",
 
+        "menu":
+            "⚙️ *AUREX NOO'R MENU*",
+
+        "help":
+            "ℹ️ *AUREX NOO'R HELP*\n\n"
+            "📱 GET NUMBER — Service ও Country নির্বাচন করুন।\n"
+            "🔐 2FA CODE — নিরাপদ 2FA সম্পর্কিত তথ্য।\n"
+            "👤 PROFILE — আপনার profile দেখুন।\n"
+            "🎁 REFER — Referral number ও link দেখুন।\n"
+            "💰 WITHDRAW — Withdrawal status দেখুন।\n\n"
+            "🌐 Language পরিবর্তন করতে Menu ব্যবহার করুন।\n"
+            "🗑️ Clear History ব্যবহার করে bot-side history মুছুন।\n\n"
+            "⚠️ Password, OTP, 2FA secret বা অন্যের verification code পাঠাবেন না।",
+
         "get_number":
             "📱 *GET NUMBER*\n\n"
-            "নিচের একটি Service নির্বাচন করুন:",
+            "একটি Service নির্বাচন করুন:",
+
+        "select_country":
+            "🌍 একটি Country নির্বাচন করুন:",
+
+        "api_unavailable":
+            "⚠️ *SERVICE UNAVAILABLE*\n\n"
+            "Number service বর্তমানে API configuration-এর জন্য unavailable।\n\n"
+            "কোনো fake/random number তৈরি করা হবে না।",
 
         "profile":
             "👤 *YOUR PROFILE*\n\n"
@@ -86,54 +109,29 @@ TEXTS = {
 
         "refer":
             "🎁 *REFERRAL PROGRAM*\n\n"
-            "👥 আপনার Referral: {referrals}\n"
+            "👥 Total Referrals: {referrals}\n"
             "💰 Referral Earnings: ${earnings:.2f}\n\n"
-            "🔗 আপনার Referral Link:\n"
+            "🔗 *Your Referral Link:*\n"
             "{link}",
 
         "withdraw":
             "💰 *WITHDRAW*\n\n"
-            "Current Balance: ${balance:.2f}\n\n"
-            "Withdrawal system বর্তমানে প্রস্তুত হচ্ছে।",
+            "💵 Current Balance: ${balance:.2f}\n\n"
+            "Withdrawal system বর্তমানে প্রস্তুত করা হচ্ছে।",
 
-        "select_service":
-            "🛠️ একটি Service নির্বাচন করুন:",
+        "twofa":
+            "🔐 *2FA CODE*\n\n"
+            "আপনার নিজের account-এর 2FA security সম্পর্কিত তথ্য এখানে দেখতে পারেন।\n\n"
+            "⚠️ কোনো password, OTP, 2FA secret বা verification code এখানে পাঠাবেন না।",
 
-        "select_country":
-            "🌍 একটি Country নির্বাচন করুন:",
-
-        "api_unavailable":
-            "⚠️ *Service Temporarily Unavailable*\n\n"
-            "API configuration সম্পূর্ণ না হওয়া পর্যন্ত Number service চালু করা যাচ্ছে না।",
-
-        "api_configured":
-            "✅ API configured আছে।\n\n"
-            "Number service integration-এর পরবর্তী ধাপ প্রস্তুত।",
-
-        "menu":
-            "⚙️ *AUREX NOO'R MENU*",
-
-        "clear_done":
-            "🗑️ আপনার bot-side history সফলভাবে clear করা হয়েছে।",
+        "clear":
+            "🗑️ Bot-side history successfully cleared.",
 
         "language":
-            "🌐 Language নির্বাচন করুন:",
+            "🌐 আপনার Language নির্বাচন করুন:",
 
         "language_changed":
-            "✅ Language successfully changed.",
-
-        "help":
-            "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — Service ও Country নির্বাচন করুন।\n"
-            "👤 PROFILE — আপনার profile দেখুন।\n"
-            "🎁 REFER — Referral number ও link দেখুন।\n"
-            "💰 WITHDRAW — Withdrawal status দেখুন।\n\n"
-            "🌐 Language পরিবর্তন করতে Menu ব্যবহার করুন।\n"
-            "🗑️ Bot-side history মুছতে Clear History ব্যবহার করুন।\n\n"
-            "⚠️ Password, OTP, 2FA secret বা অন্যের verification code পাঠাবেন না।",
-
-        "back":
-            "🔙 Back",
+            "✅ Language changed successfully.",
 
         "closed":
             "Menu closed."
@@ -142,15 +140,38 @@ TEXTS = {
     "en": {
         "welcome":
             "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
-            "🚀 Your Aurex Noo'R Bot is ready.\n\n"
-            "📱 GET NUMBER — Select a service and country.\n"
+            "🚀 *Premium Telegram Bot*\n\n"
+            "📱 GET NUMBER — Select Service and Country.\n"
+            "🔐 2FA CODE — View safe 2FA information.\n"
             "👤 PROFILE — View your profile.\n"
-            "🎁 REFER — View referrals and link.\n"
+            "🎁 REFER — View referral information.\n"
             "💰 WITHDRAW — Check withdrawal status.",
+
+        "menu":
+            "⚙️ *AUREX NOO'R MENU*",
+
+        "help":
+            "ℹ️ *AUREX NOO'R HELP*\n\n"
+            "📱 GET NUMBER — Select Service and Country.\n"
+            "🔐 2FA CODE — Safe 2FA information.\n"
+            "👤 PROFILE — View your profile.\n"
+            "🎁 REFER — View referral number and link.\n"
+            "💰 WITHDRAW — Check withdrawal status.\n\n"
+            "🌐 Change language from Menu.\n"
+            "🗑️ Use Clear History to clear bot-side history.\n\n"
+            "⚠️ Never send passwords, OTPs, 2FA secrets, or someone else's verification codes.",
 
         "get_number":
             "📱 *GET NUMBER*\n\n"
-            "Select a service:",
+            "Select a Service:",
+
+        "select_country":
+            "🌍 Select a Country:",
+
+        "api_unavailable":
+            "⚠️ *SERVICE UNAVAILABLE*\n\n"
+            "Number service is currently unavailable because API configuration is incomplete.\n\n"
+            "No fake or random number will be generated.",
 
         "profile":
             "👤 *YOUR PROFILE*\n\n"
@@ -161,54 +182,29 @@ TEXTS = {
 
         "refer":
             "🎁 *REFERRAL PROGRAM*\n\n"
-            "👥 Referrals: {referrals}\n"
+            "👥 Total Referrals: {referrals}\n"
             "💰 Referral Earnings: ${earnings:.2f}\n\n"
-            "🔗 Your Referral Link:\n"
+            "🔗 *Your Referral Link:*\n"
             "{link}",
 
         "withdraw":
             "💰 *WITHDRAW*\n\n"
-            "Current Balance: ${balance:.2f}\n\n"
+            "💵 Current Balance: ${balance:.2f}\n\n"
             "Withdrawal system is currently being prepared.",
 
-        "select_service":
-            "🛠️ Select a service:",
+        "twofa":
+            "🔐 *2FA CODE*\n\n"
+            "You can view safe information about 2FA security for your own account here.\n\n"
+            "⚠️ Never send passwords, OTPs, 2FA secrets, or verification codes here.",
 
-        "select_country":
-            "🌍 Select a country:",
-
-        "api_unavailable":
-            "⚠️ *Service Temporarily Unavailable*\n\n"
-            "Number service is unavailable until API configuration is completed.",
-
-        "api_configured":
-            "✅ API is configured.\n\n"
-            "Number service integration is ready for the next step.",
-
-        "menu":
-            "⚙️ *AUREX NOO'R MENU*",
-
-        "clear_done":
-            "🗑️ Your bot-side history has been cleared.",
+        "clear":
+            "🗑️ Bot-side history successfully cleared.",
 
         "language":
             "🌐 Select your language:",
 
         "language_changed":
-            "✅ Language successfully changed.",
-
-        "help":
-            "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — Select a service and country.\n"
-            "👤 PROFILE — View your profile.\n"
-            "🎁 REFER — View referral number and link.\n"
-            "💰 WITHDRAW — Check withdrawal status.\n\n"
-            "🌐 Change language from Menu.\n"
-            "🗑️ Use Clear History to clear bot-side history.\n\n"
-            "⚠️ Never send passwords, OTPs, 2FA secrets, or someone else's verification codes.",
-
-        "back":
-            "🔙 Back",
+            "✅ Language changed successfully.",
 
         "closed":
             "Menu closed."
@@ -217,15 +213,38 @@ TEXTS = {
     "hi": {
         "welcome":
             "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
-            "🚀 आपका Aurex Noo'R Bot तैयार है।\n\n"
+            "🚀 *Premium Telegram Bot*\n\n"
             "📱 GET NUMBER — Service और Country चुनें।\n"
+            "🔐 2FA CODE — सुरक्षित 2FA जानकारी देखें।\n"
             "👤 PROFILE — अपना Profile देखें।\n"
-            "🎁 REFER — Referral link और संख्या देखें।\n"
+            "🎁 REFER — Referral जानकारी देखें।\n"
             "💰 WITHDRAW — Withdrawal status देखें।",
+
+        "menu":
+            "⚙️ *AUREX NOO'R MENU*",
+
+        "help":
+            "ℹ️ *AUREX NOO'R HELP*\n\n"
+            "📱 GET NUMBER — Service और Country चुनें।\n"
+            "🔐 2FA CODE — सुरक्षित 2FA जानकारी।\n"
+            "👤 PROFILE — अपना profile देखें।\n"
+            "🎁 REFER — Referral number और link देखें।\n"
+            "💰 WITHDRAW — Withdrawal status देखें।\n\n"
+            "🌐 Language बदलने के लिए Menu का उपयोग करें।\n"
+            "🗑️ Clear History से bot-side history हटाएँ।\n\n"
+            "⚠️ Password, OTP, 2FA secret या किसी अन्य व्यक्ति का verification code न भेजें।",
 
         "get_number":
             "📱 *GET NUMBER*\n\n"
             "एक Service चुनें:",
+
+        "select_country":
+            "🌍 एक Country चुनें:",
+
+        "api_unavailable":
+            "⚠️ *SERVICE UNAVAILABLE*\n\n"
+            "API configuration पूरी होने तक Number service उपलब्ध नहीं है।\n\n"
+            "कोई fake/random number नहीं बनाया जाएगा।",
 
         "profile":
             "👤 *YOUR PROFILE*\n\n"
@@ -236,54 +255,29 @@ TEXTS = {
 
         "refer":
             "🎁 *REFERRAL PROGRAM*\n\n"
-            "👥 Referrals: {referrals}\n"
+            "👥 Total Referrals: {referrals}\n"
             "💰 Referral Earnings: ${earnings:.2f}\n\n"
-            "🔗 आपका Referral Link:\n"
+            "🔗 *Your Referral Link:*\n"
             "{link}",
 
         "withdraw":
             "💰 *WITHDRAW*\n\n"
-            "Current Balance: ${balance:.2f}\n\n"
+            "💵 Current Balance: ${balance:.2f}\n\n"
             "Withdrawal system अभी तैयार किया जा रहा है।",
 
-        "select_service":
-            "🛠️ एक Service चुनें:",
+        "twofa":
+            "🔐 *2FA CODE*\n\n"
+            "अपने account की 2FA security के बारे में सुरक्षित जानकारी यहाँ देखें।\n\n"
+            "⚠️ Password, OTP, 2FA secret या verification code यहाँ न भेजें।",
 
-        "select_country":
-            "🌍 एक Country चुनें:",
-
-        "api_unavailable":
-            "⚠️ *Service Temporarily Unavailable*\n\n"
-            "API configuration पूरा होने तक Number service उपलब्ध नहीं है।",
-
-        "api_configured":
-            "✅ API configured है।\n\n"
-            "Number service integration अगले चरण के लिए तैयार है।",
-
-        "menu":
-            "⚙️ *AUREX NOO'R MENU*",
-
-        "clear_done":
-            "🗑️ आपकी bot-side history clear कर दी गई है।",
+        "clear":
+            "🗑️ Bot-side history successfully cleared.",
 
         "language":
-            "🌐 अपनी भाषा चुनें:",
+            "🌐 अपनी Language चुनें:",
 
         "language_changed":
-            "✅ Language successfully changed.",
-
-        "help":
-            "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — Service और Country चुनें।\n"
-            "👤 PROFILE — अपना profile देखें।\n"
-            "🎁 REFER — Referral number और link देखें।\n"
-            "💰 WITHDRAW — Withdrawal status देखें।\n\n"
-            "🌐 Language बदलने के लिए Menu का उपयोग करें।\n"
-            "🗑️ Bot-side history हटाने के लिए Clear History का उपयोग करें।\n\n"
-            "⚠️ Password, OTP, 2FA secret या किसी अन्य व्यक्ति का verification code न भेजें।",
-
-        "back":
-            "🔙 Back",
+            "✅ Language changed successfully.",
 
         "closed":
             "Menu closed."
@@ -291,11 +285,9 @@ TEXTS = {
 }
 
 
-def t(user_id, key, **kwargs):
-    data = get_user_data(user_id)
-    lang = data.get("language", "bn")
-
-    text = TEXTS.get(lang, TEXTS["bn"]).get(key, key)
+def tr(user_id, key, **kwargs):
+    lang = get_user(user_id).get("language", "bn")
+    text = TEXT.get(lang, TEXT["bn"]).get(key, key)
 
     try:
         return text.format(**kwargs)
@@ -304,18 +296,24 @@ def t(user_id, key, **kwargs):
 
 
 # =========================================================
-# KEYBOARDS
+# MAIN REPLY KEYBOARD
 # =========================================================
 
 def main_keyboard():
     return ReplyKeyboardMarkup(
         [
-            ["📱 GET NUMBER", "👤 PROFILE"],
-            ["🎁 REFER", "💰 WITHDRAW"],
+            ["📱 GET NUMBER", "🔐 2FA CODE"],
+            ["👤 PROFILE", "🎁 REFER"],
+            ["💰 WITHDRAW"],
         ],
         resize_keyboard=True,
+        is_persistent=True,
     )
 
+
+# =========================================================
+# START GATE
+# =========================================================
 
 def start_gate_keyboard():
     return InlineKeyboardMarkup(
@@ -341,6 +339,10 @@ def start_gate_keyboard():
         ]
     )
 
+
+# =========================================================
+# MENU
+# =========================================================
 
 def menu_keyboard():
     return InlineKeyboardMarkup(
@@ -373,6 +375,10 @@ def menu_keyboard():
     )
 
 
+# =========================================================
+# LANGUAGE
+# =========================================================
+
 def language_keyboard():
     return InlineKeyboardMarkup(
         [
@@ -398,11 +404,15 @@ def language_keyboard():
                 InlineKeyboardButton(
                     "🔙 Back",
                     callback_data="back_menu"
-                ),
+                )
             ],
         ]
     )
 
+
+# =========================================================
+# SERVICES
+# =========================================================
 
 def services_keyboard():
     return InlineKeyboardMarkup(
@@ -434,6 +444,10 @@ def services_keyboard():
         ]
     )
 
+
+# =========================================================
+# COUNTRIES
+# =========================================================
 
 def countries_keyboard():
     return InlineKeyboardMarkup(
@@ -487,9 +501,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = user.id
-    user_data = get_user_data(user_id)
+    user_data = get_user(user_id)
 
-    # Referral processing
+    # Referral
     if context.args:
 
         try:
@@ -500,7 +514,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 and user_data.get("referred_by") is None
             ):
 
-                referrer = get_user_data(referrer_id)
+                referrer = get_user(referrer_id)
 
                 user_data["referred_by"] = referrer_id
                 referrer["referrals"] += 1
@@ -513,49 +527,50 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
     logger.info(
-        f"/start received from user {user_id}"
-    )
-
-    text = (
-        "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
-        "🚀 *Premium Telegram Bot*\n\n"
-        "🎵 TikTok: @aurex_noor1\n"
-        "▶️ YouTube: ToonovaCartoon1\n\n"
-        "👇 নিচের *OPEN BOT* button চাপুন।"
+        f"/start received from {user_id}"
     )
 
     await update.message.reply_text(
-        text,
+        "👑 *WELCOME TO AUREX NOO'R* 👑\n\n"
+        "✨ *PRO VERSION*\n\n"
+        "🚀 আপনার জন্য Premium Bot Experience প্রস্তুত।\n\n"
+        "👇 Continue করতে নিচের button চাপুন।",
         reply_markup=start_gate_keyboard(),
         parse_mode="Markdown",
     )
 
 
 # =========================================================
-# MENU
+# MENU COMMAND
 # =========================================================
 
-async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not update.message:
+        return
 
     user_id = update.effective_user.id
 
     await update.message.reply_text(
-        t(user_id, "menu"),
+        tr(user_id, "menu"),
         reply_markup=menu_keyboard(),
         parse_mode="Markdown",
     )
 
 
 # =========================================================
-# HELP
+# HELP COMMAND
 # =========================================================
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    if not update.message:
+        return
+
     user_id = update.effective_user.id
 
     await update.message.reply_text(
-        t(user_id, "help"),
+        tr(user_id, "help"),
         parse_mode="Markdown",
     )
 
@@ -564,12 +579,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # GET NUMBER
 # =========================================================
 
-async def show_get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = update.effective_user.id
 
     await update.message.reply_text(
-        t(user_id, "get_number"),
+        tr(user_id, "get_number"),
         reply_markup=services_keyboard(),
         parse_mode="Markdown",
     )
@@ -579,13 +594,13 @@ async def show_get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # PROFILE
 # =========================================================
 
-async def show_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = update.effective_user.id
-    data = get_user_data(user_id)
+    data = get_user(user_id)
 
     await update.message.reply_text(
-        t(
+        tr(
             user_id,
             "profile",
             user_id=user_id,
@@ -601,22 +616,24 @@ async def show_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # REFER
 # =========================================================
 
-async def show_refer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def refer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = update.effective_user.id
-    data = get_user_data(user_id)
+    data = get_user(user_id)
 
-    bot_username = context.bot.username
+    bot_username = context.bot.username or "AurexNoorBot"
 
-    link = f"https://t.me/{bot_username}?start={user_id}"
+    referral_link = (
+        f"https://t.me/{bot_username}?start={user_id}"
+    )
 
     await update.message.reply_text(
-        t(
+        tr(
             user_id,
             "refer",
             referrals=data["referrals"],
             earnings=data["referral_earnings"],
-            link=link,
+            link=referral_link,
         ),
         parse_mode="Markdown",
     )
@@ -626,13 +643,13 @@ async def show_refer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # WITHDRAW
 # =========================================================
 
-async def show_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = update.effective_user.id
-    data = get_user_data(user_id)
+    data = get_user(user_id)
 
     await update.message.reply_text(
-        t(
+        tr(
             user_id,
             "withdraw",
             balance=data["balance"],
@@ -642,37 +659,51 @@ async def show_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================================
-# MESSAGE HANDLER
+# 2FA
 # =========================================================
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def twofa(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user_id = update.effective_user.id
+
+    await update.message.reply_text(
+        tr(user_id, "twofa"),
+        parse_mode="Markdown",
+    )
+
+
+# =========================================================
+# TEXT HANDLER
+# =========================================================
+
+async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not update.message:
         return
 
-    user_id = update.effective_user.id
     text = update.message.text
 
     if text == "📱 GET NUMBER":
+        await get_number(update, context)
 
-        await show_get_number(update, context)
+    elif text == "🔐 2FA CODE":
+        await twofa(update, context)
 
     elif text == "👤 PROFILE":
-
-        await show_profile(update, context)
+        await profile(update, context)
 
     elif text == "🎁 REFER":
-
-        await show_refer(update, context)
+        await refer(update, context)
 
     elif text == "💰 WITHDRAW":
-
-        await show_withdraw(update, context)
+        await withdraw(update, context)
 
     else:
 
+        user_id = update.effective_user.id
+
         await update.message.reply_text(
-            t(user_id, "welcome"),
+            tr(user_id, "welcome"),
             reply_markup=main_keyboard(),
             parse_mode="Markdown",
         )
@@ -682,7 +713,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # CALLBACK HANDLER
 # =========================================================
 
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def callback_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
 
     query = update.callback_query
 
@@ -692,59 +726,48 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     user_id = query.from_user.id
-    data = get_user_data(user_id)
+    data = get_user(user_id)
 
     callback = query.data
 
-    # -----------------------------
     # OPEN BOT
-    # -----------------------------
-
     if callback == "open_bot":
 
         await query.edit_message_text(
-            t(user_id, "welcome"),
+            tr(user_id, "welcome"),
             parse_mode="Markdown",
         )
 
         await query.message.reply_text(
-            "👇 Main Menu",
+            "👇 *AUREX NOO'R MAIN MENU*",
             reply_markup=main_keyboard(),
+            parse_mode="Markdown",
         )
 
         return
 
-    # -----------------------------
     # CLEAR HISTORY
-    # -----------------------------
-
     if callback == "clear_history":
 
         data["history"] = []
 
         await query.edit_message_text(
-            t(user_id, "clear_done")
+            tr(user_id, "clear")
         )
 
         return
 
-    # -----------------------------
     # LANGUAGE
-    # -----------------------------
-
     if callback == "language":
 
         await query.edit_message_text(
-            t(user_id, "language"),
+            tr(user_id, "language"),
             reply_markup=language_keyboard(),
         )
 
         return
 
-    # -----------------------------
     # LANGUAGE CHANGE
-    # -----------------------------
-
     if callback.startswith("lang_"):
 
         lang = callback.replace("lang_", "")
@@ -753,54 +776,42 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             data["language"] = lang
 
         await query.edit_message_text(
-            t(user_id, "language_changed")
+            tr(user_id, "language_changed")
         )
 
         return
 
-    # -----------------------------
     # HELP
-    # -----------------------------
-
     if callback == "help":
 
         await query.edit_message_text(
-            t(user_id, "help"),
+            tr(user_id, "help"),
             parse_mode="Markdown",
         )
 
         return
 
-    # -----------------------------
     # CLOSE
-    # -----------------------------
-
     if callback == "close":
 
         await query.edit_message_text(
-            t(user_id, "closed")
+            tr(user_id, "closed")
         )
 
         return
 
-    # -----------------------------
-    # BACK TO MENU
-    # -----------------------------
-
+    # BACK MENU
     if callback == "back_menu":
 
         await query.edit_message_text(
-            t(user_id, "menu"),
+            tr(user_id, "menu"),
             reply_markup=menu_keyboard(),
             parse_mode="Markdown",
         )
 
         return
 
-    # -----------------------------
     # SERVICE
-    # -----------------------------
-
     if callback.startswith("service_"):
 
         service = callback.replace("service_", "")
@@ -813,17 +824,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await query.edit_message_text(
-            t(user_id, "select_country"),
+            tr(user_id, "select_country"),
             reply_markup=countries_keyboard(),
             parse_mode="Markdown",
         )
 
         return
 
-    # -----------------------------
     # COUNTRY
-    # -----------------------------
-
     if callback.startswith("country_"):
 
         country = callback.replace("country_", "")
@@ -838,14 +846,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not FIVESIM_API_KEY:
 
             await query.edit_message_text(
-                t(user_id, "api_unavailable"),
+                tr(user_id, "api_unavailable"),
                 parse_mode="Markdown",
             )
 
             return
 
         await query.edit_message_text(
-            t(user_id, "api_configured"),
+            "✅ API configured.\n\n"
+            "Number service integration is ready for the next safe step.",
             parse_mode="Markdown",
         )
 
@@ -856,11 +865,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ERROR HANDLER
 # =========================================================
 
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+async def error_handler(update, context):
 
     logger.exception(
         "Unhandled exception:",
-        exc_info=context.error,
+        exc_info=context.error
     )
 
 
@@ -872,13 +881,24 @@ async def post_init(application):
 
     await application.bot.set_my_commands(
         [
-            BotCommand("start", "🚀 Start Bot"),
-            BotCommand("menu", "⚙️ Menu"),
-            BotCommand("help", "ℹ️ Help"),
+            BotCommand(
+                "start",
+                "🚀 Start Bot"
+            ),
+            BotCommand(
+                "menu",
+                "⚙️ Menu"
+            ),
+            BotCommand(
+                "help",
+                "ℹ️ Help"
+            ),
         ]
     )
 
-    logger.info("Telegram commands registered successfully.")
+    logger.info(
+        "Telegram commands registered successfully."
+    )
 
 
 # =========================================================
@@ -911,7 +931,7 @@ def run_health_check():
     port = int(
         os.environ.get(
             "PORT",
-            "8080"
+            "10000"
         )
     )
 
@@ -933,9 +953,17 @@ def run_health_check():
 
 def main():
 
-    logger.info("======================================")
-    logger.info("Aurex Noo'R Bot is starting...")
-    logger.info("======================================")
+    logger.info(
+        "========================================"
+    )
+
+    logger.info(
+        "Aurex Noo'R PRO Version is starting..."
+    )
+
+    logger.info(
+        "========================================"
+    )
 
     if not BOT_TOKEN:
 
@@ -945,7 +973,7 @@ def main():
 
         return
 
-    # Render health server
+    # Render server
     health_thread = threading.Thread(
         target=run_health_check,
         daemon=True
@@ -953,7 +981,7 @@ def main():
 
     health_thread.start()
 
-    # Telegram application
+    # Telegram Application
     application = (
         ApplicationBuilder()
         .token(BOT_TOKEN)
@@ -963,27 +991,38 @@ def main():
 
     # Commands
     application.add_handler(
-        CommandHandler("start", start)
+        CommandHandler(
+            "start",
+            start
+        )
     )
 
     application.add_handler(
-        CommandHandler("menu", menu)
+        CommandHandler(
+            "menu",
+            menu_command
+        )
     )
 
     application.add_handler(
-        CommandHandler("help", help_command)
+        CommandHandler(
+            "help",
+            help_command
+        )
     )
 
-    # Buttons
+    # Inline buttons
     application.add_handler(
-        CallbackQueryHandler(handle_callback)
+        CallbackQueryHandler(
+            callback_handler
+        )
     )
 
-    # Main keyboard
+    # Reply keyboard
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
-            handle_message
+            message_handler
         )
     )
 
@@ -992,7 +1031,7 @@ def main():
     )
 
     logger.info(
-        "Aurex Noo'R Bot is now polling Telegram..."
+        "Aurex Noo'R is now polling Telegram..."
     )
 
     application.run_polling(
@@ -1001,7 +1040,7 @@ def main():
 
 
 # =========================================================
-# ENTRY POINT
+# START APPLICATION
 # =========================================================
 
 if __name__ == "__main__":
