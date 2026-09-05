@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
@@ -10,138 +11,127 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # User memory storage
 user_data = {}
 
-TEXTS = {
-    'bn': {
-        'welcome': "👋 **আসসালামু আলাইকুম!**\n\n🌟 **Aurex Noo'R** Bot-এ আপনাকে স্বাগতম! 💙\nনিচের মেনু থেকে আপনার প্রয়োজনীয় অপশন নির্বাচন করুন:",
-        'get_num': "🛡 **Select service**",
-        'admin_panel': "🛠 **ADMIN PANEL**",
-        'clear_confirm': "⚠️ **আপনি কি সত্যিই আপনার সমস্ত ডাটা ও হিস্ট্রি মুছে ফেলতে চান?**",
-        'clear_success': "✅ **আপনার সমস্ত ডাটা ও হিস্ট্রি সফলভাবে মুছে ফেলা হয়েছে!**",
-        'lang_select': "🌐 **ভাষা নির্বাচন করুন / Select Language:**",
-        'lang_changed': "✅ **ভাষা সফলভাবে বাংলায় পরিবর্তন করা হয়েছে!**",
-        'btn_get_num': "📲 Get Number",
-        'btn_leaderboard': "🏆 Leader board",
-        'btn_profile': "👤 PROFILE",
-        'btn_support': "🛟 SUPPORT",
-        'btn_refer': "🎁 Refer",
-        'btn_admin': "⚙️ ADMIN PANEL ⚙️",
-        'btn_history': "🗑 Clear History",
-        'btn_lang': "🌐 Language"
-    },
-    'en': {
-        'welcome': "👋 **Welcome to Aurex Noo'R Bot!**\n\nPlease select an option from the menu below:",
-        'get_num': "🛡 **Select service**",
-        'admin_panel': "🛠 **ADMIN PANEL**",
-        'clear_confirm': "⚠️ **Are you sure you want to clear all your history and data?**",
-        'clear_success': "✅ **All your history and data have been successfully cleared!**",
-        'lang_select': "🌐 **Select Language:**",
-        'lang_changed': "✅ **Language successfully set to English!**",
-        'btn_get_num': "📲 Get Number",
-        'btn_leaderboard': "🏆 Leader board",
-        'btn_profile': "👤 PROFILE",
-        'btn_support': "🛟 SUPPORT",
-        'btn_refer': "🎁 Refer",
-        'btn_admin': "⚙️ ADMIN PANEL ⚙️",
-        'btn_history': "🗑 Clear History",
-        'btn_lang': "🌐 Language"
-    }
-}
-
-def get_lang(user_id):
-    return user_data.get(user_id, {}).get('lang', 'bn')
-
-def main_keyboard(lang):
-    t = TEXTS[lang]
+# Main Menu Keyboard (Video Style)
+def main_keyboard():
     keyboard = [
-        [t['btn_get_num'], t['btn_leaderboard']],
-        [t['btn_history'], t['btn_support']],
-        [t['btn_refer'], t['btn_profile']],
-        [t['btn_lang']],
-        [t['btn_admin']]
+        ["💬 GET NUMBER", "🔐 2FA CODE"],
+        ["👤 PROFILE", "🎁 REFER"],
+        ["💰 WITHDRAW"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-def admin_keyboard():
+# Services Menu
+def services_keyboard():
     keyboard = [
-        [InlineKeyboardButton("VERIFY 🔴[OFF]", callback_data='toggle_verify'), InlineKeyboardButton("✏️ Edit Emoji", callback_data='edit')],
-        [InlineKeyboardButton("VERMSS 🔴[OFF]", callback_data='toggle_vermss'), InlineKeyboardButton("✏️ Edit Emoji", callback_data='edit')],
-        [InlineKeyboardButton("WHATNOT 🔴[OFF]", callback_data='toggle_whatnot'), InlineKeyboardButton("✏️ Edit Emoji", callback_data='edit')],
-        [InlineKeyboardButton("WHATSAPP 🔴[OFF]", callback_data='toggle_whatsapp'), InlineKeyboardButton("✏️ Edit Emoji", callback_data='edit')],
-        [InlineKeyboardButton("❌ Close", callback_data='close_menu')]
+        [InlineKeyboardButton("📲 FB-PC-CLONE", callback_data='srv_FB-PC-CLONE')],
+        [InlineKeyboardButton("📸 Instagram", callback_data='srv_Instagram')],
+        [InlineKeyboardButton("📘 Fb-New ID", callback_data='srv_Fb-New ID')],
+        [InlineKeyboardButton("💬 WhatsApp", callback_data='srv_WhatsApp')],
+        [InlineKeyboardButton("❌ ব্যাক (Back)", callback_data='close_menu')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
-def service_keyboard():
+# Country List Menu (For WhatsApp / Other Services)
+def country_keyboard(service_name):
     keyboard = [
-        [InlineKeyboardButton("👾 DISCORD", callback_data='srv_discord')],
-        [InlineKeyboardButton("📱 AUTHENTIFY", callback_data='srv_authentify')],
-        [InlineKeyboardButton("📲 ATB", callback_data='srv_atb')],
-        [InlineKeyboardButton("❌ Close", callback_data='close_menu')]
+        [InlineKeyboardButton("🇲🇱 Mali", callback_data=f"cntry_{service_name}_Mali")],
+        [InlineKeyboardButton("🇲🇬 Madagascar", callback_data=f"cntry_{service_name}_Madagascar")],
+        [InlineKeyboardButton("🇧🇩 Bangladesh", callback_data=f"cntry_{service_name}_Bangladesh")],
+        [InlineKeyboardButton("🇸🇦 Saudi Arabia", callback_data=f"cntry_{service_name}_SaudiArabia")],
+        [InlineKeyboardButton("🇸🇱 Sierra Leone", callback_data=f"cntry_{service_name}_SierraLeone")],
+        [InlineKeyboardButton("🔙 ব্যাক", callback_data='back_to_services')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    lang = get_lang(user_id)
-    await update.message.reply_text(
-        TEXTS[lang]['welcome'],
-        reply_markup=main_keyboard(lang),
-        parse_mode='Markdown'
+    user_name = update.effective_user.first_name
+    welcome_text = (
+        f"👑 **NUMBER PANEL**\n\n"
+        f"👋 **স্বাগতম, {user_name}!**\n\n"
+        f"আমাদের বট থেকে সার্ভিস পেতে\n"
+        f"নিচের মেনু থেকে **GET NUMBER** এ চাপ দিন।"
     )
+    await update.message.reply_text(welcome_text, reply_markup=main_keyboard(), parse_mode='Markdown')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text
-    lang = get_lang(user_id)
-    t = TEXTS[lang]
 
-    if text in ["📲 Get Number", t['btn_get_num']]:
-        await update.message.reply_text(t['get_num'], reply_markup=service_keyboard(), parse_mode='Markdown')
+    if text == "💬 GET NUMBER":
+        msg = "👑 **SELECT SERVICE** 👑\n\nপছন্দমতো সার্ভিস বেছে নিন:"
+        await update.message.reply_text(msg, reply_markup=services_keyboard(), parse_mode='Markdown')
 
-    elif text in ["⚙️ ADMIN PANEL ⚙️", t['btn_admin']]:
-        await update.message.reply_text(t['admin_panel'], reply_markup=admin_keyboard(), parse_mode='Markdown')
+    elif text == "🔐 2FA CODE":
+        await update.message.reply_text("🔑 **2FA Code Generator:**\n\nআপনার কোড জেনারেট করতে টু-ফ্যাক্টর কী (Secret Key) পাঠান।", parse_mode='Markdown')
 
-    elif text in ["🗑 Clear History", t['btn_history']]:
-        keyboard = [
-            [InlineKeyboardButton("✅ Yes, Clear All Data", callback_data='confirm_clear')],
-            [InlineKeyboardButton("❌ Cancel", callback_data='close_menu')]
-        ]
-        await update.message.reply_text(t['clear_confirm'], reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+    elif text == "👤 PROFILE":
+        name = update.effective_user.first_name
+        profile_text = (
+            f"👤 **ইউজার প্রোফাইল**\n\n"
+            f"🆔 আইডি: `{user_id}`\n"
+            f"📛 নাম: {name}\n"
+            f"💰 ব্যালেন্স: ৳0.00\n"
+            f"📱 মোট কেনা নম্বর: 0 টি"
+        )
+        await update.message.reply_text(profile_text, parse_mode='Markdown')
 
-    elif text in ["🌐 Language", t['btn_lang']]:
-        keyboard = [
-            [InlineKeyboardButton("🇧🇩 বাংলা (Bengali)", callback_data='set_lang_bn')],
-            [InlineKeyboardButton("🇺🇸 English", callback_data='set_lang_en')]
-        ]
-        await update.message.reply_text(t['lang_select'], reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+    elif text == "🎁 REFER":
+        refer_link = f"https://t.me/Aurex_otp_bot?start={user_id}"
+        refer_text = (
+            f"🎁 **রেফারেল প্রোগ্রাম**\n\n"
+            f"আপনার রেফারেল লিংক ব্যবহার করে বন্ধুদের জয়েন করান এবং বোনাস জিতুন!\n\n"
+            f"🔗 লিংক: `{refer_link}`"
+        )
+        await update.message.reply_text(refer_text, parse_mode='Markdown')
 
-    elif text in ["👤 PROFILE", t['btn_profile']]:
-        await update.message.reply_text(f"👤 **User Profile**\n\nID: `{user_id}`\nName: {update.effective_user.first_name}", parse_mode='Markdown')
+    elif text == "💰 WITHDRAW":
+        await update.message.reply_text("💳 **উইথড্র অপশন:**\n\nসর্বনিম্ন উইথড্র limit ৳১০০ টাকা। আপনার পর্যাপ্ত ব্যালেন্স নেই।", parse_mode='Markdown')
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    user_id = query.from_user.id
     await query.answer()
 
     if query.data == 'close_menu':
         await query.message.delete()
 
-    elif query.data == 'confirm_clear':
-        current_lang = get_lang(user_id)
-        user_data[user_id] = {'lang': current_lang}  # Clears history
-        await query.edit_message_text(TEXTS[current_lang]['clear_success'], parse_mode='Markdown')
+    elif query.data == 'back_to_services':
+        msg = "👑 **SELECT SERVICE** 👑\n\nপছন্দমতো সার্ভিস বেছে নিন:"
+        await query.edit_message_text(msg, reply_markup=services_keyboard(), parse_mode='Markdown')
 
-    elif query.data.startswith('set_lang_'):
-        new_lang = query.data.split('_')[2]
-        if user_id not in user_data:
-            user_data[user_id] = {}
-        user_data[user_id]['lang'] = new_lang
-        await query.message.delete()
-        await query.message.reply_text(
-            TEXTS[new_lang]['lang_changed'],
-            reply_markup=main_keyboard(new_lang),
-            parse_mode='Markdown'
+    elif query.data.startswith('srv_'):
+        service_name = query.data.split('_')[1]
+        msg = f"💬 **{service_name}**\n\nঅনুগ্ৰহ করে দেশ বেছে নিন:"
+        await query.edit_message_text(msg, reply_markup=country_keyboard(service_name), parse_mode='Markdown')
+
+    elif query.data.startswith('cntry_'):
+        _, service, country = query.data.split('_')
+        
+        generated_num = f"+232{random.randint(10000000, 99999999)}"
+        price = "35.00 BDT"
+        operator = "Orange (Airtel)"
+        
+        num_card = (
+            f"💬 **{service} ({country})**\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"📱 **নম্বর:** `{generated_num}`\n"
+            f"🌍 **দেশ:** {country}\n"
+            f"📶 **অপারেটর:** {operator}\n"
+            f"💵 **মূল্য:** {price}\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"⌛ **ওটিপি (OTP) এর জন্য অপেক্ষা করা হচ্ছে... (৩ মিনিট)**"
         )
+        
+        action_keyboard = [
+            [InlineKeyboardButton("📋 CP-নম্বর কপি", callback_data=f'copy_{generated_num}')],
+            [InlineKeyboardButton("🔄 পরিবর্তন করুন", callback_data=f'srv_{service}')],
+            [InlineKeyboardButton("❌ ক্যানসেল করুন", callback_data='close_menu')]
+        ]
+        
+        await query.edit_message_text(num_card, reply_markup=InlineKeyboardMarkup(action_keyboard), parse_mode='Markdown')
+
+    elif query.data.startswith('copy_'):
+        num = query.data.split('_')[1]
+        await query.answer(f"নম্বর কপি করা হয়েছে: {num}", show_alert=True)
 
 def main():
     if not BOT_TOKEN:
