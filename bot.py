@@ -7,8 +7,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Logging Configuration
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
 # Health Check Server for Render Uptime
@@ -39,7 +38,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     
     print("Bot is polling...")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
