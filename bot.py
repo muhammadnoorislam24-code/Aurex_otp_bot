@@ -22,7 +22,7 @@ from telegram.ext import (
 )
 
 # =========================================================
-# AUREX NOO'R TELEGRAM BOT — PRO
+# AUREX NOO'R TELEGRAM BOT — PRO (5SIM INTEGRATED)
 # =========================================================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -83,7 +83,7 @@ TEXT = {
             "🟢 *5SIM API CONNECTED*\n\n"
             "✅ Authentication সফল\n"
             "✅ Account status পাওয়া গেছে\n\n"
-            "ℹ️ এই bot fake/random number তৈরি করে না।"
+            "ℹ️ নিচে থেকে দেশ ও সার্ভিস সিলেক্ট করে নাম্বার নিন।"
         ),
         "invalid_key": (
             "❌ *5SIM API KEY INVALID*\n\n"
@@ -130,7 +130,7 @@ TEXT = {
             "🟢 *5SIM API CONNECTED*\n\n"
             "✅ Authentication successful\n"
             "✅ Account status received\n\n"
-            "ℹ️ This bot does not generate fake/random numbers."
+            "ℹ️ Select country and service to buy a number."
         ),
         "invalid_key": (
             "❌ *5SIM API KEY INVALID*\n\n"
@@ -177,7 +177,7 @@ TEXT = {
             "🟢 *5SIM API CONNECTED*\n\n"
             "✅ Authentication सफल\n"
             "✅ Account status प्राप्त हुआ\n\n"
-            "ℹ️ यह bot fake/random numbers generate नहीं करता।"
+            "ℹ️ नीचे से country और service चुनकर number लें।"
         ),
         "invalid_key": (
             "❌ *5SIM API KEY INVALID*\n\n"
@@ -324,7 +324,7 @@ def language_keyboard():
 
 
 # =========================================================
-# 5SIM API CLIENT
+# 5SIM API CLIENT (ADVANCED)
 # =========================================================
 
 class FiveSimClient:
@@ -342,12 +342,8 @@ class FiveSimClient:
         }
 
     def get_profile(self):
-
         if not self.configured():
-            return {
-                "ok": False,
-                "error": "not_configured",
-            }
+            return {"ok": False, "error": "not_configured"}
 
         try:
             response = requests.get(
@@ -355,55 +351,51 @@ class FiveSimClient:
                 headers=self.headers(),
                 timeout=10,
             )
-
             if response.status_code == 200:
-                return {
-                    "ok": True,
-                    "data": response.json(),
-                }
-
+                return {"ok": True, "data": response.json()}
             if response.status_code == 401:
-                return {
-                    "ok": False,
-                    "error": "invalid_api_key",
-                }
-
+                return {"ok": False, "error": "invalid_api_key"}
             if response.status_code == 403:
-                return {
-                    "ok": False,
-                    "error": "access_denied",
-                }
-
+                return {"ok": False, "error": "access_denied"}
             if response.status_code == 429:
-                return {
-                    "ok": False,
-                    "error": "rate_limited",
-                }
-
-            return {
-                "ok": False,
-                "error": f"http_{response.status_code}",
-            }
-
+                return {"ok": False, "error": "rate_limited"}
+            return {"ok": False, "error": f"http_{response.status_code}"}
         except requests.Timeout:
-            return {
-                "ok": False,
-                "error": "timeout",
-            }
-
+            return {"ok": False, "error": "timeout"}
         except requests.RequestException:
-            logger.exception("5SIM network error")
-            return {
-                "ok": False,
-                "error": "network_error",
-            }
-
+            return {"ok": False, "error": "network_error"}
         except Exception:
-            logger.exception("5SIM unexpected error")
-            return {
-                "ok": False,
-                "error": "unknown_error",
-            }
+            return {"ok": False, "error": "unknown_error"}
+
+    def buy_number(self, country="usa", operator="any", product="whatsapp"):
+        if not self.configured():
+            return {"ok": False, "error": "not_configured"}
+
+        try:
+            url = f"{FIVESIM_BASE_URL}/v1/user/buy/activation/{country}/{operator}/{product}"
+            response = requests.get(url, headers=self.headers(), timeout=15)
+            
+            if response.status_code == 200:
+                return {"ok": True, "data": response.json()}
+            else:
+                return {"ok": False, "error": response.text or f"http_{response.status_code}"}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def check_order(self, order_id):
+        if not self.configured():
+            return {"ok": False, "error": "not_configured"}
+
+        try:
+            url = f"{FIVESIM_BASE_URL}/v1/user/check/{order_id}"
+            response = requests.get(url, headers=self.headers(), timeout=10)
+            
+            if response.status_code == 200:
+                return {"ok": True, "data": response.json()}
+            else:
+                return {"ok": False, "error": f"http_{response.status_code}"}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
 
 
 fivesim = FiveSimClient(FIVESIM_API_KEY)
@@ -414,19 +406,15 @@ fivesim = FiveSimClient(FIVESIM_API_KEY)
 # =========================================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message or not update.effective_user:
         return
 
     user_id = update.effective_user.id
     data = get_user(user_id)
 
-    # Referral
     if context.args:
-
         try:
             referrer_id = int(context.args[0])
-
             if (
                 referrer_id != user_id
                 and data["referred_by"] is None
@@ -434,7 +422,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ):
                 data["referred_by"] = referrer_id
                 users[referrer_id]["referrals"] += 1
-
         except (ValueError, TypeError):
             pass
 
@@ -450,14 +437,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================================================
 
 async def open_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     query = update.callback_query
-
     if not query or not query.message:
         return
 
     await query.answer()
-
     user_id = query.from_user.id
 
     await query.message.reply_text(
@@ -472,11 +456,8 @@ async def open_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================================================
 
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message or not update.effective_user:
         return
-
-    user_id = update.effective_user.id
 
     await update.message.reply_text(
         "⚙️ *AUREX NOO'R MENU*",
@@ -490,117 +471,68 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================================================
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message or not update.effective_user:
         return
 
     user_id = update.effective_user.id
+    lang = get_user(user_id)["language"]
 
-    if get_user(user_id)["language"] == "bn":
-
+    if lang == "bn":
         text = (
             "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — 5SIM service status\n"
-            "🔐 2FA CODE — 2FA section\n"
-            "👤 PROFILE — account information\n"
-            "🎁 REFER — referral information\n"
-            "💰 WITHDRAW — withdrawal section\n\n"
-            "⚙️ /menu — utility menu\n"
-            "🌐 Language — ভাষা পরিবর্তন\n"
-            "🗑️ Clear History — temporary history পরিষ্কার"
+            "📱 GET NUMBER — 5SIM থেকে নাম্বার এবং ওটিপি চেক করুন\n"
+            "🔐 2FA CODE — 2FA সেকশন\n"
+            "👤 PROFILE — অ্যাকাউন্ট ইনফরমেশন\n"
+            "🎁 REFER — রেফারেল লিংক\n"
+            "💰 WITHDRAW — উইথড্রল সেকশন"
         )
-
-    elif get_user(user_id)["language"] == "hi":
-
-        text = (
-            "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — 5SIM service status\n"
-            "🔐 2FA CODE — 2FA section\n"
-            "👤 PROFILE — account information\n"
-            "🎁 REFER — referral information\n"
-            "💰 WITHDRAW — withdrawal section\n\n"
-            "⚙️ /menu — utility menu\n"
-            "🌐 Language — भाषा बदलें\n"
-            "🗑️ Clear History — history साफ़ करें"
-        )
-
     else:
-
         text = (
             "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — 5SIM service status\n"
+            "📱 GET NUMBER — Buy number & check OTP via 5SIM\n"
             "🔐 2FA CODE — 2FA section\n"
-            "👤 PROFILE — account information\n"
-            "🎁 REFER — referral information\n"
-            "💰 WITHDRAW — withdrawal section\n\n"
-            "⚙️ /menu — utility menu\n"
-            "🌐 Language — change language\n"
-            "🗑️ Clear History — clear temporary history"
+            "👤 PROFILE — Account information\n"
+            "🎁 REFER — Referral info\n"
+            "💰 WITHDRAW — Withdrawal section"
         )
 
-    await update.message.reply_text(
-        text,
-        parse_mode="Markdown",
-    )
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 # =========================================================
-# GET NUMBER
+# GET NUMBER & 5SIM ACTIONS
 # =========================================================
 
 async def get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message or not update.effective_user:
         return
 
     user_id = update.effective_user.id
 
     if not fivesim.configured():
-
         await update.message.reply_text(
             tr(user_id, "service_unavailable"),
             parse_mode="Markdown",
         )
-
         return
 
-    result = await asyncio.to_thread(
-        fivesim.get_profile
-    )
+    # কিবোর্ড বা অপশন দেখানোর জন্য ইনলাইন বাটন
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🇺🇸 USA WhatsApp", callback_data="buy_usa_whatsapp")],
+        [InlineKeyboardButton("🌐 Check Active Orders", callback_data="check_orders")]
+    ])
 
+    result = await asyncio.to_thread(fivesim.get_profile)
     if not result["ok"]:
-
-        error = result["error"]
-
-        error_key = {
-            "invalid_api_key": "invalid_key",
-            "access_denied": "access_denied",
-            "rate_limited": "rate_limited",
-            "timeout": "timeout",
-            "network_error": "network_error",
-            "unknown_error": "unknown_error",
-        }.get(error, "unknown_error")
-
-        await update.message.reply_text(
-            tr(user_id, error_key),
-            parse_mode="Markdown",
-        )
-
+        await update.message.reply_text(tr(user_id, "invalid_key"), parse_mode="Markdown")
         return
 
-    api_data = result.get("data", {})
-
-    balance = api_data.get("balance")
-
-    if balance is None:
-        balance_text = "Unavailable"
-    else:
-        balance_text = str(balance)
+    balance = result.get("data", {}).get("balance", "N/A")
 
     await update.message.reply_text(
-        tr(user_id, "api_connected")
-        + f"\n\n💰 Balance: `{balance_text}`",
+        tr(user_id, "api_connected") + f"\n\n💰 Balance: `{balance}`\n\nনিচের বাটন থেকে অপশন বেছে নিন:",
         parse_mode="Markdown",
+        reply_markup=keyboard,
     )
 
 
@@ -609,7 +541,6 @@ async def get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================================================
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message or not update.effective_user:
         return
 
@@ -622,16 +553,12 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🆔 User ID: `{user_id}`\n"
         f"💰 Balance: ${data['balance']:.2f}\n"
         f"👥 Total Referrals: {data['referrals']}\n"
-        f"🎁 Referral Earnings: "
-        f"${data['referral_earnings']:.2f}\n"
+        f"🎁 Referral Earnings: ${data['referral_earnings']:.2f}\n"
         "━━━━━━━━━━━━━━━━━━\n\n"
         "✨ Account Status: Active"
     )
 
-    await update.message.reply_text(
-        text,
-        parse_mode="Markdown",
-    )
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 # =========================================================
@@ -639,19 +566,12 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================================================
 
 async def refer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message or not update.effective_user:
         return
 
     user_id = update.effective_user.id
-
-    bot_username = context.bot.username
-
-    if not bot_username:
-        bot_username = "AurexNoorBot"
-
+    bot_username = context.bot.username or "AurexNoorBot"
     link = f"https://t.me/{bot_username}?start={user_id}"
-
     data = get_user(user_id)
 
     await update.message.reply_text(
@@ -665,34 +585,23 @@ async def refer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================================
-# WITHDRAW
+# WITHDRAW & 2FA
 # =========================================================
 
 async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message:
         return
-
     await update.message.reply_text(
-        "💰 *WITHDRAW*\n\n"
-        "Withdrawal system is currently under development.\n\n"
-        "Please wait for the PRO release.",
+        "💰 *WITHDRAW*\n\nWithdrawal system is currently under development.",
         parse_mode="Markdown",
     )
 
 
-# =========================================================
-# 2FA
-# =========================================================
-
 async def twofa(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not update.message:
         return
-
     await update.message.reply_text(
-        "🔐 *2FA CODE*\n\n"
-        "2FA feature is currently under development.",
+        "🔐 *2FA CODE*\n\n2FA feature is currently under development.",
         parse_mode="Markdown",
     )
 
@@ -701,11 +610,7 @@ async def twofa(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # MESSAGE HANDLER
 # =========================================================
 
-async def message_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
+async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
 
@@ -713,64 +618,101 @@ async def message_handler(
 
     if text == "📱 GET NUMBER":
         await get_number(update, context)
-
     elif text == "🔐 2FA CODE":
         await twofa(update, context)
-
     elif text == "👤 PROFILE":
         await profile(update, context)
-
     elif text == "🎁 REFER":
         await refer(update, context)
-
     elif text == "💰 WITHDRAW":
         await withdraw(update, context)
-
     else:
         await update.message.reply_text(
-            "❓ Unknown option.\n\n"
-            "Please use the buttons below.",
+            "❓ Unknown option.\nPlease use the buttons below.",
             reply_markup=main_keyboard(),
         )
 
 
 # =========================================================
-# CALLBACK HANDLER
+# CALLBACK HANDLER (BUY & CHECK SMS)
 # =========================================================
 
-async def callback_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-
     if not query:
         return
 
     await query.answer()
-
     user_id = query.from_user.id
     data = query.data
 
     if data == "open_bot":
-
         await query.message.reply_text(
             tr(user_id, "opened"),
             parse_mode="Markdown",
             reply_markup=main_keyboard(),
         )
 
+    elif data == "buy_usa_whatsapp":
+        await query.message.reply_text("⏳ Buying USA WhatsApp number from 5SIM, please wait...")
+        
+        # 5sim থেকে USA WhatsApp নম্বর কেনার রিকোয়েস্ট
+        res = await asyncio.to_thread(fivesim.buy_number, country="usa", operator="virtual8", product="whatsapp")
+        
+        if res["ok"]:
+            order = res["data"]
+            phone = order.get("phone")
+            order_id = order.get("id")
+            sms_list = order.get("sms", [])
+            
+            msg = (
+                f"✅ *NUMBER BOUGHT SUCCESSFULLY!*\n\n"
+                f"📱 Number: `+{phone}`\n"
+                f"🆔 Order ID: `{order_id}`\n"
+                f"📌 Status: Waiting for OTP...\n\n"
+                f"শর্ত: আপনার আইপি/ভিপিএন USA হতে হবে।"
+            )
+            
+            # ইউজারকে একটিভ অর্ডারের স্ট্যাটাস চেক করার বাটন দেওয়া
+            kb = InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Check OTP / SMS", callback_data=f"check_order_{order_id}")]])
+            await query.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
+        else:
+            await query.message.reply_text(f"❌ Failed to buy number: {res['error']}")
+
+    elif data.startswith("check_order_"):
+        order_id = data.replace("check_order_", "")
+        await query.message.reply_text("🔄 Checking order status from 5SIM...")
+        
+        res = await asyncio.to_thread(fivesim.check_order, order_id)
+        if res["ok"]:
+            order = res["data"]
+            status = order.get("status")
+            sms_list = order.get("sms", [])
+            
+            sms_text = ""
+            if sms_list:
+                for sms in sms_list:
+                    sms_text += f"\n📩 Code: `{sms.get('code')}` (Text: {sms.get('text')})"
+            else:
+                sms_text = "\n⏳ No OTP received yet. Please wait..."
+
+            kb = InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Refresh OTP", callback_data=f"check_order_{order_id}")]])
+            await query.message.reply_text(
+                f"📊 *ORDER STATUS*\n\n"
+                f"🆔 ID: `{order_id}`\n"
+                f"📌 Status: `{status}`"
+                f"{sms_text}",
+                parse_mode="Markdown",
+                reply_markup=kb
+            )
+        else:
+            await query.message.reply_text("❌ Could not fetch order status.")
+
     elif data == "clear_history":
-
         get_user(user_id)["history"] = []
-
-        await query.message.reply_text(
-            tr(user_id, "history_cleared")
-        )
+        await query.message.reply_text(tr(user_id, "history_cleared"))
 
     elif data == "language":
-
         await query.message.reply_text(
             "🌐 *SELECT LANGUAGE*",
             parse_mode="Markdown",
@@ -778,38 +720,23 @@ async def callback_handler(
         )
 
     elif data in ["lang_bn", "lang_en", "lang_hi"]:
-
         lang = data.replace("lang_", "")
-
         get_user(user_id)["language"] = lang
-
         await query.message.reply_text(
             tr(user_id, "language_updated"),
             reply_markup=main_keyboard(),
         )
 
     elif data == "help":
-
-        await query.message.reply_text(
-            "ℹ️ *AUREX NOO'R HELP*\n\n"
-            "📱 GET NUMBER — 5SIM connection/status\n"
-            "🔐 2FA CODE — 2FA section\n"
-            "👤 PROFILE — account details\n"
-            "🎁 REFER — referral link\n"
-            "💰 WITHDRAW — withdrawal section\n\n"
-            "Use /menu for utilities.",
-            parse_mode="Markdown",
-        )
+        await help_command(update, context)
 
     elif data == "close":
-
         try:
             await query.message.delete()
         except Exception:
             pass
 
     elif data == "back_menu":
-
         await query.message.edit_text(
             "⚙️ *AUREX NOO'R MENU*",
             parse_mode="Markdown",
@@ -821,16 +748,8 @@ async def callback_handler(
 # ERROR HANDLER
 # =========================================================
 
-async def error_handler(
-    update: object,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    logger.error(
-        "Telegram error: %s",
-        context.error,
-        exc_info=context.error,
-    )
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    logger.error("Telegram error: %s", context.error, exc_info=context.error)
 
 
 # =========================================================
@@ -838,45 +757,20 @@ async def error_handler(
 # =========================================================
 
 class HealthHandler(BaseHTTPRequestHandler):
-
     def do_GET(self):
-
         self.send_response(200)
-
-        self.send_header(
-            "Content-Type",
-            "text/plain",
-        )
-
+        self.send_header("Content-Type", "text/plain")
         self.end_headers()
-
-        self.wfile.write(
-            b"Aurex Noo'R Bot is running."
-        )
+        self.wfile.write(b"Aurex Noo'R Bot is running.")
 
     def log_message(self, format, *args):
         return
 
 
 def run_health_server():
-
-    port = int(
-        os.getenv(
-            "PORT",
-            "10000",
-        )
-    )
-
-    server = HTTPServer(
-        ("0.0.0.0", port),
-        HealthHandler,
-    )
-
-    logger.info(
-        "Health server running on port %s",
-        port,
-    )
-
+    port = int(os.getenv("PORT", "10000"))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    logger.info("Health server running on port %s", port)
     server.serve_forever()
 
 
@@ -885,21 +779,11 @@ def run_health_server():
 # =========================================================
 
 async def post_init(application):
-
     await application.bot.set_my_commands(
         [
-            BotCommand(
-                "start",
-                "Start the bot",
-            ),
-            BotCommand(
-                "menu",
-                "Open menu",
-            ),
-            BotCommand(
-                "help",
-                "Help",
-            ),
+            BotCommand("start", "Start the bot"),
+            BotCommand("menu", "Open menu"),
+            BotCommand("help", "Help"),
         ]
     )
 
@@ -909,18 +793,10 @@ async def post_init(application):
 # =========================================================
 
 def main():
-
     if not BOT_TOKEN:
+        raise RuntimeError("BOT_TOKEN is missing from environment variables.")
 
-        raise RuntimeError(
-            "BOT_TOKEN is missing from environment variables."
-        )
-
-    health_thread = threading.Thread(
-        target=run_health_server,
-        daemon=True,
-    )
-
+    health_thread = threading.Thread(target=run_health_server, daemon=True)
     health_thread.start()
 
     application = (
@@ -930,56 +806,16 @@ def main():
         .build()
     )
 
-    application.add_handler(
-        CommandHandler(
-            "start",
-            start,
-        )
-    )
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("menu", menu))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CallbackQueryHandler(callback_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+    application.add_error_handler(error_handler)
 
-    application.add_handler(
-        CommandHandler(
-            "menu",
-            menu,
-        )
-    )
+    logger.info("AUREX NOO'R BOT STARTING...")
+    application.run_polling(drop_pending_updates=True)
 
-    application.add_handler(
-        CommandHandler(
-            "help",
-            help_command,
-        )
-    )
-
-    application.add_handler(
-        CallbackQueryHandler(
-            callback_handler,
-        )
-    )
-
-    application.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            message_handler,
-        )
-    )
-
-    application.add_error_handler(
-        error_handler
-    )
-
-    logger.info(
-        "AUREX NOO'R BOT STARTING..."
-    )
-
-    application.run_polling(
-        drop_pending_updates=True
-    )
-
-
-# =========================================================
-# RUN
-# =========================================================
 
 if __name__ == "__main__":
     main()
